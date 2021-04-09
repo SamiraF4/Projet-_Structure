@@ -14,7 +14,7 @@ Noeud* rechercheCreeNoeudListe(Reseau *R, double x, double y){
   while(n){
     n=c->nd;
     /*Si x et y sont le même alors on retourne le noeud*/
-    if(n->x=x && n->y=y){
+    if((n->x=x) && (n->y=y)){
       return n;
     }
     c=c->suiv;
@@ -24,9 +24,9 @@ Noeud* rechercheCreeNoeudListe(Reseau *R, double x, double y){
   n=R->noeuds->nd;//on sauvegarde le premier noeud
 
   /*On alloue un CellNoeud et on le met dans le reseau*/
-  c=(CellNoeud *)malloc(sizoef(CellNoeud));
+  c=(CellNoeud *)malloc(sizeof(CellNoeud));
   if(!c){
-    printf("Noeud* rechercheCreeNoeudListe(Reseau *R, double x, double y) Erreur d'allocution de CellNoeud\n");
+    printf("Noeud* rechercheCreeNoeudListe(Reseau *R, double x, double y) Erreur d'allocation de CellNoeud\n");
     return NULL;
   }
   c->suiv=R->noeuds;
@@ -34,8 +34,8 @@ Noeud* rechercheCreeNoeudListe(Reseau *R, double x, double y){
 
   /*On alloue un noeud et on l'affecte à la cellule et  on retourne le noeud*/
   Noeud *m=(Noeud *)malloc(sizeof(Noeud));
-  if(m!){
-    printf("Noeud* rechercheCreeNoeudListe(Reseau *R, double x, double y) Erreur d'allocution de Noeud\n");
+  if(!m){
+    printf("Noeud* rechercheCreeNoeudListe(Reseau *R, double x, double y) Erreur d'allocation de Noeud\n");
     return NULL;
   }
   m->num=R->nbNoeuds+1;
@@ -47,22 +47,48 @@ Noeud* rechercheCreeNoeudListe(Reseau *R, double x, double y){
   return m;
 }
 
+void libererReseau(Reseau *R){
+  if(R){
+    CellNoeud* cn=R->noeuds;
+    while(cn){
+      R->noeuds=cn->suiv;
+      Noeud*n=cn->nd;
+      CellNoeud* v=n->voisins;
+      while(v){
+        n->voisins=v->suiv;
+        free(v);
+        v=n->voisins;
+      }
+      free(cn);
+      cn=R->noeuds;
+    }
+    CellCommodite *c=R->commodites;
+    while(c){
+      R->commodites=c->suiv;
+      free(c);
+      c=R->commodites;
+    }
+    free(R);
+  }
+}
+
 Reseau* reconstitueReseauListe(Chaines *C){
-  if (c){
+  if (C){
     Reseau* R=(Reseau *)malloc(sizeof(Reseau));
-    if(R!){
-      printf("Reseau* reconstitueReseauListe(Chaines *C) Erreur d'allocution de Reseau\n");
+    if(!R){
+      printf("Reseau* reconstitueReseauListe(Chaines *C) Erreur d'allocation de Reseau\n");
       return NULL;
     }
     R->nbNoeuds=0;
-    R->gamma=c->gamma;
+    R->gamma=C->gamma;
     R->noeuds=NULL;
     R->commodites=NULL;
-    CellChaine* tmp=c->chaines;
+    CellChaine* tmp=C->chaines;
     while(tmp){
       CellPoint* ptmp=tmp->points;
       CellPoint* debut=tmp->points;
-      Noeuds* a,b;
+      Noeud* a;
+      Noeud* b;
       while(ptmp && ptmp->suiv){
         a=rechercheCreeNoeudListe(R,ptmp->x,ptmp->y);
         b=rechercheCreeNoeudListe(R,ptmp->suiv->x,ptmp->suiv->y);
@@ -72,13 +98,13 @@ Reseau* reconstitueReseauListe(Chaines *C){
           return NULL;
         }
         CellNoeud* A=(CellNoeud *)malloc(sizeof(CellNoeud));
-        if(A!){
+        if(!A){
           printf("Reseau* reconstitueReseauListe(Chaines *C)  Erreur d'allocation de A\n");
           libererReseau(R);
           return NULL;
         }
         CellNoeud* B=(CellNoeud *)malloc(sizeof(CellNoeud));
-        if(B!){
+        if(!B){
           printf("Reseau* reconstitueReseauListe(Chaines *C)  Erreur d'allocation de A\n");
           libererReseau(R);
           return NULL;
@@ -93,45 +119,27 @@ Reseau* reconstitueReseauListe(Chaines *C){
       }
       /*Allocation de la commodité et on le place dans le Reseau*/
       CellCommodite *c=(CellCommodite *)malloc(sizeof(CellCommodite));
-      if(c!){
+      if(!c){
         printf("Reseau* reconstitueReseauListe(Chaines *C)  Erreur d'allocation de c\n");
         libererReseau(R);
         return NULL;
       }
-      c->extrA=debut;
-      c->extrB=ptmp;
+      c->extrA->x=debut->x;
+      c->extrA->y=debut->y;
+
+      c->extrB->x=ptmp->x;
+      c->extrB->y=ptmp->y;
+
       c->suiv=R->commodites;
       R->commodites=c;
       tmp=tmp->suiv;
     }
   }
+  return NULL;
 }
 
 
-void libererReseau(Reseau *R){
-  if(R){
-    CellNoeud* cn=R->noeuds;
-    while(cn){
-      R->noeud=cn->suiv;
-      Noeud*n=cn->nd;
-      CellNoeud* v=n->voisins;
-      while(v){
-        n->voisins=v->suiv;
-        free(v);
-        v=n->voisins;
-      }
-      free(cn);
-      cn=R->noeud;
-    }
-    CellCommodite *c=R->commodites;
-    while(c){
-      R->commodites=c->suiv;
-      free(c);
-      c=R->commodites;
-    }
-    free(R);
-  }
-}
+
 
 int nbLiaisons(Reseau *R){
   if(R){
@@ -143,11 +151,12 @@ int nbLiaisons(Reseau *R){
         res++;
         voisins=voisins->suiv;
       }
-      noeud=noeuds->suiv;
+      noeuds=noeuds->suiv;
     }
-    return res//2;
+    return res/2;
   }
   printf("il n'y a pas de réseau\n");
+  return -1;
 }
 
 int nbCommodites(Reseau *R){
@@ -165,12 +174,12 @@ int nbCommodites(Reseau *R){
 }
 
 void ecrireReseau(Reseau *R, FILE *f){
-  if !(R && f){
+  if (!(R && f)){
     printf("Problème de paramètre\n");
   }
   else{
     fprintf(f,"NbNoeuds: %d",R->nbNoeuds);
-    fprintf(f,"NbLiaisons: %d"nbLiaisons(R));
+    fprintf(f,"NbLiaisons: %d",nbLiaisons(R));
     fprintf(f,"NbCommodites: %d",nbCommodites(R));
     fprintf(f,"Gamma: %d",R->gamma);
     fprintf(f,"\n");
@@ -183,3 +192,18 @@ void ecrireReseau(Reseau *R, FILE *f){
 
   }
 }
+
+int main(){
+  /*FILE *f=fopen("00014_burma.cha","r");
+  if (!f) return -1;
+  Chaines* c=lectureChaines(f);
+  Reseau *R= reconstitueReseauListe(c);
+  rechercheCreeNoeudListe(R,1.0,2.0);
+  nbLiaisons(R);
+  nbCommodites(R);
+  ecrireReseau(R,f);
+  fclose(f);
+  libererReseau(R);*/
+  return 0;
+}
+

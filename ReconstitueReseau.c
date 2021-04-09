@@ -11,16 +11,16 @@ int main(int argc,char *argv){
     printf("Il n'y a pas assez de paramètres\n");
     return -1;
   }
-  int n=atoi(argv[2])
+  int n=atoi(&argv[2]);
   if (n>=4 || n<=0){
     printf("Erreur de paramètres: l'entier doit être compris 1 et 3\n");
     return -1;
   }
-  if(n=1){
+  if(n==1){
     printf("Liste Chainée\n");
 
   }
-  if(n=2){
+  if(n==2){
     printf("Table de hachage\n");
   }
   else {
